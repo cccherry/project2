@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <title>Phone Book</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" type="text/css" href="index.css">
+    <script type="text/javascript">
+        var user;
+        var contacts = []
+        var cid;
+        var statelist = ["NJ","NY","FL"];
+        var citylist = [{"state":"NJ","cities":[{"city":"Jersey City"},{"city":"Newark"},{"city":"Hokoken"}]},{"state":"NY","cities":[{"city":"Manhattan"},{"city":"Long Island"},{"city":"Booklyn"}]},{"state":"FL","cities":[{"city":"Orlando"},{"city":"Miami"},{"city":"Pensacola"}]}];
+        window.onload = function(){
+            user = init();
+            if (localStorage["contacts"] != null && localStorage["contacts"] != undefined) {
+                contacts = JSON.parse(localStorage["contacts"]);
+            }
+            getContacts(contacts);
+
+            for(var i=0;i<statelist.length;i++){
+                var node = document.createElement("option");
+                var textnode = document.createTextNode(statelist[i]);
+                node.appendChild(textnode);
+                document.getElementById("state").appendChild(node);
+            }
+        }
+
+        function showCity(){
+            document.getElementById("city").innerHTML='';
+            var state = document.getElementById("state").value;
+            for(var i=0;i<citylist.length;i++){
+                if(citylist[i].state == state){
+                    // alert(citylist[i].cities.length);
+                    // var citynum = citylist[i].cities.length;
+                    for(var j=0;j<citylist[i].cities.length;j++){
+                        // alert(citylist[i].cities[j].city);
+                        var node = document.createElement("option");
+                        var textnode = document.createTextNode(citylist[i].cities[j].city);
+                        node.appendChild(textnode);
+                        document.getElementById("city").appendChild(node);
+                    }
+                }
+            }
+        }
+        function viewProfile(){
+            document.location.href="showUserInfo.html?id="+user["user_id"];
+        }
+
+        function addContact(){
+            var contactId;
+            if(localStorage['contactId'] != null && localStorage["contactId"] != undefined){
+                contactId = JSON.parse(localStorage['contactId']);
+            }else{
+                contactId = 0
+            }
+            contactId = contactId+1;
+            var fname = document.getElementById("fname").value;
+            var lname = document.getElementById("lname").value;
+            var city = document.getElementById("city").value;
+            var state = document.getElementById("state").value;
+            var address = document.getElementById("address").value;
+            var zip = document.getElementById("zip").value;
+            var email = document.getElementById("email").value;
+            var mobile = document.getElementById("mobile").value;
+
+
+            var contact = {"contactId":contactId,"fname":fname,"lname":lname,"city":city,"state":state,"address":address,"zip":zip,"email":email,"mobile":mobile,"user_id":user["user_id"]};
+            contacts.push(contact);
+            localStorage["contacts"] = JSON.stringify(contacts);
+            localStorage["contactId"] = contactId;
+
+            document.getElementById("formPanel").style.display="none";
+            document.getElementById("showPanel").style.display="block";
+            getContacts(contacts);
+        }
+
+        function addNew(){
+            if(user == null){
+                document.location.href = "login.html";
+            }
+            document.getElementById("formPanel").style.display="block";
+            document.getElementById("showPanel").style.display="none";
+            clearForm();
+        }
+
+        function show(contacts){
+            if (contacts.length > 0) {
+                var table = "<table class='table'><tr><th>Contact Id</th><th>First name</th><th>Last name</th><th>Email</th><th>Mobile</th><th>Action</th></tr>";
+                contacts.forEach(function (entry) {
+                    table += "<tr><td>" + entry.contactId + "</td><td>" + entry.fname + "</td><td>" + entry.lname + "</td><td>" + entry.email + "</td><td>" + entry.mobile +"</td><td><a href='javascript:void(0)' onclick='deleteContact("+entry.contactId+")'>Delete</a>|<a href='javascript:void(0)' onclick='showContact("+entry.contactId+")''>View</a></td></tr>";
+                });
+                table += "</table>";
+                document.getElementById("showContacts").innerHTML = table;
+            } else {
+                document.getElementById("showContacts").innerHTML = "<h2>No Data Found</h2>";
+            }
+        }
+        function showContact(id){
+            document.getElementById("formPanel").style.display="block";
+            document.getElementById("showPanel").style.display="none";
+            var contact;
+            for(var i=0;i<contacts.length;i++){
+                if(contacts[i]['contactId'] == id){
+                    contact = contacts[i];
+                    break;
+                }
+            }
+            document.getElementById("fname").disabled = true;
+            document.getElementById("lname").disabled = true;
+            document.getElementById("address").disabled = true;
+            document.getElementById("city").disabled = true;
+            document.getElementById("state").disabled = true;
+            document.getElementById("zip").disabled = true;
+            document.getElementById("email").disabled = true;
+            document.getElementById("mobile").disabled = true;
+            document.getElementById("fname").value = contact["fname"];
+            document.getElementById("lname").value = contact["lname"];
+            document.getElementById("address").value = contact["address"];
+            document.getElementById("city").value = contact["city"];
+            document.getElementById("state").value = contact["state"];
+            document.getElementById("zip").value = contact["zip"];
+            document.getElementById("email").value = contact["email"];
+            document.getElementById("mobile").value = contact["mobile"];
+
+            document.getElementById("addContact").style.display = "none";
+            document.getElementById("editContact").style.display = "inline";
+            document.getElementById("updateContact").style.display = "none";
+            cid = id;
+
+
+
+        }
+
+        function editContact(){
+            document.getElementById("fname").disabled = false;
+            document.getElementById("lname").disabled = false;
+            document.getElementById("address").disabled = false;
+            document.getElementById("city").disabled = false;
+            document.getElementById("state").disabled = false;
+            document.getElementById("zip").disabled = false;
+            document.getElementById("email").disabled = false;
+            document.getElementById("mobile").disabled = false;
+            document.getElementById("addContact").style.display = "none";
+            document.getElementById("editContact").style.display = "none";
+            document.getElementById("updateContact").style.display = "inline";
+        }
+
+        function back(){
+            document.getElementById("formPanel").style.display="none";
+            document.getElementById("showPanel").style.display="block";
+            getContacts(contacts);
+        }
+
+        function updateContact(){
+            var fname = document.getElementById("fname").value;
+            var lname = document.getElementById("lname").value;
+            var city = document.getElementById("city").value;
+            var state = document.getElementById("state").value;
+            var address = document.getElementById("address").value;
+            var zip = document.getElementById("zip").value;
+            var email = document.getElementById("email").value;
+            var mobile = document.getElementById("mobile").value;
+
+            for(var i=0;i<contacts.length;i++){
+                if(contacts[i]['contactId'] == cid){
+                    // contacts.splice(i, 1);
+                    contacts[i]['fname']=fname;
+                    contacts[i]['lname']=lname;
+                    contacts[i]['city']=city;
+                    contacts[i]['state']=state;
+                    contacts[i]['address']=address;
+                    contacts[i]['zip']=zip;
+                    contacts[i]['email']=email;
+                    contacts[i]['mobile']=mobile;
+                    break;
+                }
+            }
+            // var contact = {"contactId":cid,"fname":fname,"lname":lname,"city":city,"state":state,"address":address,"zip":zip,"email":email,"mobile":mobile,"user_id":user["user_id"]};
+            //contacts.push(contact);
+            localStorage["contacts"] = JSON.stringify(contacts);
+            back();
+        }
+
+        function clearForm() {
+            fname.value = "";
+            lname.value = "";
+            city.value = "";
+            state.value = "";
+            address.value = "";
+            zip.value = "";
+            email.value = "";
+            mobile.value = "";
+        }
+
+        function deleteContact(id){
+            for(var i=0;i<contacts.length;i++){
+                if(contacts[i]['contactId'] == id){
+                    contacts.splice(i, 1);
+                    break;
+                }
+            }
+            localStorage["contacts"] = JSON.stringify(contacts);
+            back();
+        }
+
+        function getContacts(){
+            var c = [];
+            if(user["user_id"] != null && user["user_id"] != undefined){
+                for(var i=0;i<contacts.length;i++){
+                    if(contacts[i]["user_id"] == user["user_id"]){
+                        c[i] = contacts[i];
+                    }
+                }
+                show(c);
+            }else{
+                document.location.href="login.html";
+            }
+
+
+        }
+
+    </script>
+</head>
+<body>
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html"><i>PB</i></a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li><a href="index.html">Home <span class="sr-only">(current)</span></a></li>
+                <li><a href="about.html">About</a></li>
+                <li  class="active"><a href="contacts.html">Contacts</a></li>
+                <li id="manage"><a href="manage.html">Manage</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li>[Welcome <span id="user_name">Guest</span>]&nbsp;&nbsp;</li>
+                <li><span id="logout">[<a href="login.html">Login</a>/<a href="register.html">Register</a>]</span></li>
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8" id="showPanel">
+            <span><button class="btn btn-danger" onclick="addNew()">Add New Contact</button></span>
+            <div  class="jumbotron" id="showContacts">
+
+            </div>
+
+        </div>
+        <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8" id="formPanel" style="display:none">
+
+            <h2>Add Contact Here...</h2>
+            <h4>First Name:</h4>
+            <input type="text" name="fname" id="fname" class="col-xs-12 col-sm-12 col-md-12 col-lg-12"><br>
+            <h4>Last Name:</h4>
+            <input type="text" name="lname" id="lname" class="col-xs-12 col-sm-12 col-md-12 col-lg-12"><br>
+            <h4>Address:</h4>
+            <input type="text" name="address" id="address" class="col-xs-12 col-sm-12 col-md-12 col-lg-12"><br>
+            <h4>State:</h4>
+            <!-- <input type="text" name="state" id="state" class="col-xs-12 col-sm-12 col-md-12 col-lg-12"><br> -->
+            <select name="state" id="state" onchange="showCity()" class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+
+            </select><br>
+            <h4>City:</h4>
+            <!-- <input type="text" name="city" id="city" class="col-xs-12 col-sm-12 col-md-12 col-lg-12"><br> -->
+            <select name="city" id="city" class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+
+            </select><br>
+            <h4>Zip:</h4>
+            <input type="text" name="zip" id="zip" class="col-xs-12 col-sm-12 col-md-12 col-lg-12"><br>
+            <h4>Email:</h4>
+            <input type="text" name="email" id="email" class="col-xs-12 col-sm-12 col-md-12 col-lg-12"><br>
+            <h4>Mobile:</h4>
+            <input type="text" name="mobile" id="mobile" class="col-xs-12 col-sm-12 col-md-12 col-lg-12"><br><br>
+            <button class="btn btn-primary" onclick="addContact()" id='addContact'>Submit</button>
+            <button class="btn btn-primary" onclick="editContact()" id='editContact' style="display:none">Edit</button>
+            <button class="btn btn-primary" onclick="updateContact()" id='updateContact' style="display:none">Update</button>
+            <button class="btn btn-primary" onclick="back()" id='back'>Back</button>
+
+        </div>
+        <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+            <ul class="list-group" id="profile" style="display:none;">
+                <a href="resetpwd.html"><li class="list-group-item">Reset Password</li></a>
+                <a href="javascript:void(0)" onclick="viewProfile()"><li class="list-group-item">View Profile</li></a>
+            </ul>
+            <ul class="list-group">
+
+            </ul>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <hr>
+    <span>&copy;Yue Yin-2015</span>
+</footer>
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="index.js"></script>
+</body>
+</html>
